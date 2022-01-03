@@ -1,0 +1,56 @@
+#' LiftMAF
+#'
+#' This function lifts a MAF file to a different genomic build
+#' @param infile tibble of MAF 
+#' @param Current_Build GRCh38 or GRCh37
+#' @importFrom dplyr  
+#' @importFrom magrittr "%>%"
+#' @importFrom GenomicRanges
+#' @importFrom liftover
+#' @return MAF tibble with positions lifted to another build 
+#' @export
+#' @examples
+#' 
+#' LiftMAF(Infile, Current_Build = 'GRCh38')
+
+
+LiftMAF <- function(Infile, Current_Build){
+  #The input file is assumed to be maf_tibble, this file is then lifted to 
+  # either 38 or 37 and return as a tibble
+  flag <- FALSE
+  if(Current_Build == 'GRCh38'){
+    chainBuild <- "hg38ToHg19.over.chain"
+    #Make chain from 38 to 19
+    path = system.file(package="liftOver", "extdata", chainBuild)
+    flag <- TRUE
+  } else if(Current_Build == "GRCh37"){
+    chainBuild <- "hg19ToHg38.over.chain"
+    path <- "/data/databases/liftOver/20211102/hg19ToHg38.over.chain"
+    flag <- TRUE
+  } else {
+    print("Error: Build must be either GRCh38 or GRCh37")
+  }
+  print(chainBuild)
+  if(flag == TRUE){
+    #Change to Grange format
+    infile_GRange <- makeGRangesFromDataFrame(Infile, 
+                                              start.field = "Start_Position", 
+                                              end.field = "End_Position",
+                                              seqnames.field = "Chromosome",
+                                              keep.extra.columns = TRUE)
+    #Import chain
+    chain <- import.chain(path)
+    
+    #Do liftover
+    infile_GRange_lifted <- liftOver(x = infile_GRange, chain = chain)
+    
+    #recreate maf column names and tibble format
+    outfile_tibble_lifted <- as_tibble(infile_GRange_lifted) %>% 
+      dplyr::rename(Start_Position = start,
+                    End_Position = end, 
+                    Chromosome = seqnames) %>% 
+      dplyr::select(-c(group, group_name, width))
+    
+    return(outfile_tibble_lifted)
+  }
+}
