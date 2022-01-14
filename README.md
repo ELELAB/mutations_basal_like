@@ -1,6 +1,6 @@
 # mutations_basal_like
 
-This code was delvelped as part of the Master Thesis "An Automatised Workflow to Study Mechanistic Indicators for Driver Gene Prediction with Moonlight". 
+This code was developed as part of the Master Thesis "An Automatised Workflow to Study Mechanistic Indicators for Driver Gene Prediction with Moonlight". 
 
 The folder src contains the delveoped functions for Moonlight and new additional data. 
 The remaing folders are the pilot project studying basal-like breast cancer. 
