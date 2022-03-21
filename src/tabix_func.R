@@ -44,7 +44,11 @@ tabix_func <- function(Ranges, Reference_Allele, Mutant, file_coding, file_nonco
   } else{
     #Look for score in coding region
     x <- as_tibble(tabix.read.table(tabixFile = file_coding,
-                                    tabixRange = Ranges))
+                                    tabixRange = Ranges)) %>%
+      mutate(across(where(is.logical),as.character)) %>%
+      mutate(across(.cols = everything(),
+                    .fns =~ str_replace_all(string =., pattern = "TRUE", replacement = "T")))
+    
     # Has the data been found
     if(dim(x)[1] != 0){
       flag <- TRUE
@@ -52,7 +56,11 @@ tabix_func <- function(Ranges, Reference_Allele, Mutant, file_coding, file_nonco
     } else {
       # If no annotation is found in this position try the noncoding file
       x <- as_tibble(tabix.read.table(tabixFile = file_noncoding,
-                                      tabixRange = Ranges))
+                                      tabixRange = Ranges)) %>%
+        mutate(across(where(is.logical),as.character)) %>%
+        mutate(across(.cols = everything(),
+                      .fns =~ str_replace_all(string =., pattern = "TRUE", replacement = "T")))
+      
       
       if(dim(x)[1] != 0){
         flag <- TRUE
