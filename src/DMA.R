@@ -57,11 +57,10 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
                  names_to = "Variant_Type", 
                  values_to = "Potential_Effect_on_Protein")
   
-  # Load ENCODE files (promoter and enhancer)
+  # Load ENCODE file (promoters)
   promoters <- read_tsv("data/ENCFF140XLU.bed.gz", col_names = FALSE) %>% 
     mutate(Annotation = 'Promoter')
-  enhancers <- read_tsv("data/ENCFF212UAV.bed.gz", col_names = FALSE) %>% 
-    mutate(Annotation = 'Enhancer')
+
   
   # Wrangle Data -----------------------------
   # Keep only mutations in DEGs 
@@ -132,10 +131,10 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
               by = "Hugo_Symbol")
   
   
-  ## Promoters and enhancers -------------
+  ## Promoters -------------
   
   #Merge Encode files into one
-  encode_tibble <- full_join(promoters, enhancers) %>% 
+  encode_tibble <- promoters %>% 
     dplyr::select(X1, X2, X3, Annotation) %>% 
     dplyr::rename("Chromosome_annot" = "X1",
                   "Annotation_Start" = "X2",
