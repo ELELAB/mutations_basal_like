@@ -22,7 +22,7 @@
 #' 
 #' DMA(MafFile, DEGs, Drivers, coding_file, noncoding_file, results_folder)
 
-MutationAnalysis <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file, results_folder){
+DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file, results_folder){
   
   # Create Output folder
   if (dir.exists(results_folder)){
@@ -75,13 +75,18 @@ MutationAnalysis <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file
   
   cscape_in <- MAFtoCscape(DEGs_mut_hg19) 
   
-  print("Cscape will now run. It takes some time")
+  print("Cscape-somatic will now run. It takes some time")
   cscape_out <- RunCscape_somatic(input = cscape_in,
                                   coding_file = coding_file,
                                   noncoding_file = noncoding_file)
   
+  write_csv(cscape_out,
+            path = paste(results_folder,"Cscape_output_raw.csv", sep ='/'),
+            col_names = TRUE)
+  cscape_out <- read_csv(paste(results_folder, "Cscape_output_raw.csv", sep = '/'))
+  
   # merge cscape results
-  print('Cscape finished. Output file is saved in result folder.')
+  print('Cscape-somatic is finished. Output file is saved in result folder.')
   cscape_out <- cscape_out %>% 
     mutate(Variant_Type = "SNP")
   
