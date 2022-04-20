@@ -91,13 +91,17 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   
   DEGs_mut_annotated_19 <- DEGs_mut_hg19 %>% 
     separate(Chromosome, into = c(NA, "Chr"), sep = 3, remove = FALSE)%>% 
+    mutate(Mutant = case_when(Reference_Allele == Tumor_Seq_Allele1 ~ Tumor_Seq_Allele2,
+                              Reference_Allele == Tumor_Seq_Allele2 ~ Tumor_Seq_Allele1)) %>%
     left_join(cscape_out, 
               by = c("Start_Position" = "Position", 
                      "Variant_Type", 
-                     "Chr")) %>%
+                     "Chr", 
+                     "Mutant")) %>%
     mutate(Driver_Mutation = case_when((Coding_score > 0.5 | Noncoding_score > 0.5) ~ "Driver",    #Driver
                                        (Coding_score <= 0.5 | Noncoding_score <= 0.5 ~ "Passenger"), #Passenger
-                                       TRUE ~ "Unclassified")) #When no score is found
+                                       TRUE ~ "Unclassified")) %>%  #When no score is found
+    unique()
   
   #Lift back to 38
   DEGs_mut_annotated <- LiftMAF(Infile = DEGs_mut_annotated_19, 
