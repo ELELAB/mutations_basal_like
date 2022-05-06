@@ -98,9 +98,9 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
                      "Variant_Type", 
                      "Chr", 
                      "Mutant")) %>%
-    mutate(Driver_Mutation = case_when((Coding_score > 0.5 | Noncoding_score > 0.5) ~ "Driver",    #Driver
-                                       (Coding_score <= 0.5 | Noncoding_score <= 0.5 ~ "Passenger"), #Passenger
-                                       TRUE ~ "Unclassified")) %>%  #When no score is found
+    mutate(CScape_Mut_Class = case_when((Coding_score > 0.5 | Noncoding_score > 0.5) ~ "CScape_Driver_Mut",    #Driver
+                                       (Coding_score <= 0.5 | Noncoding_score <= 0.5 ~ "CScape_Passenger_Mut"), #Passenger
+                                       TRUE ~ "CScape_Unclassified_Mut")) %>%  #When no score is found
     unique()
   
   #Lift back to 38
@@ -127,7 +127,7 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
     # and merge driver status from moonlight
   no_muts <- DEGs_mut %>% filter(is.na(ID))
   DEGs_mut_annotated <- bind_rows(DEGs_mut_annotated, no_muts) %>% 
-    replace_na(list(Driver_Mutation = 'No_mutations'))
+    replace_na(list(CScape_Mut_Class = 'No_mutations'))
   
   # Add drivers from moonlight ------------
   DEGs_mut_annotated <- DEGs_mut_annotated %>% 
@@ -166,20 +166,20 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   
   # Make Summary Table --------------------------
   Summary_per_gene_1 <- DEGs_mut_annotated %>% 
-    group_by(Hugo_Symbol, Driver_type, Driver_Mutation) %>% 
+    group_by(Hugo_Symbol, Moonlight_Driver_Type, CScape_Mut_Class) %>% 
     summarise(n = n()) %>% 
-    pivot_wider(names_from = Driver_Mutation,
+    pivot_wider(names_from = CScape_Mut_Class,
                 values_from = n) 
   
   Summary_per_gene_2 <- DEGs_mut_annotated %>% 
-    group_by(Hugo_Symbol, Driver_type) %>% 
+    group_by(Hugo_Symbol, Moonlight_Driver_Type) %>% 
     summarise(Transcription_mut_sum = sum(Potential_Effect_on_Transcription, na.rm = TRUE),
               Translation_mut_sum = sum(Potential_Effect_on_Translation, na.rm = TRUE),
               Protein_mut_sum = sum(Potential_Effect_on_Protein, na.rm = TRUE),
               Total_Mutations = sum(!is.na(ID))) 
   
   Summary_per_gene <- full_join(Summary_per_gene_1, Summary_per_gene_2) %>% 
-    filter(!is.na(Driver_type)) %>% 
+    filter(!is.na(Moonlight_Driver_Type)) %>% 
     arrange(desc(Driver, Total_Mutations)) %>% 
     dplyr::select(!No_mutations)
   
@@ -193,13 +193,13 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   #(when other tools to estimate score are implemented, pivot cscape scores and other score)
   DEGs_mut_Raw_out <- DEGs_mut_annotated %>% 
     relocate(any_of(c("Moonlight_gene_z_score", 
-                      "Driver_type",
+                      "Moonlight_Driver_Type",
                       "Coding", "Noncoding", 
-                      "Driver_Mutation", 
+                      "CScape_Mut_Class", 
                       "Potential_Effect_on_Transcription",
                       "Potential_Effect_on_Translation", 
                       "Potential_Effect_on_Protein")), .after = "B") %>% 
-    mutate(Driver_Mutation = replace_na(Driver_Mutation, 'Unclassified'))
+    mutate(CScape_Mut_Class = replace_na(CScape_Mut_Class, 'Unclassified'))
   
   write_csv(x = DEGs_mut_Raw_out,
             path = paste(results_folder,"/DEGene_All_Mutation_Annotations.csv", sep = ''),

@@ -20,13 +20,13 @@ PRAtoTibble <- function(pra_file){
   TSG <- as_tibble(pra_data$TSG, rownames = NA) %>% 
     rownames_to_column(var = "Hugo_Symbol") %>%  
     mutate(Hugo_Symbol = str_trim(Hugo_Symbol, side = 'both'),
-           Driver_type = "TSG") %>%
+           Moonlight_Driver_Type = "TSG") %>%
     dplyr::rename(Moonlight_gene_z_score = value)
   
   OCG <- as_tibble(pra_data$OCG, rownames = NA) %>% 
     rownames_to_column(var = "Hugo_Symbol") %>% 
     mutate(Hugo_Symbol = str_trim(Hugo_Symbol, side = 'both'),
-           Driver_type = "OCG") %>% 
+           Moonlight_Driver_Type = "OCG") %>% 
     dplyr::rename(Moonlight_gene_z_score = value)
   
   drivers <- full_join(TSG, OCG) 
