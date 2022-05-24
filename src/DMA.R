@@ -34,9 +34,8 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   
   # Load Data --------------------------------
   # read maf and add ID number to each mutation
-  mutations <- read_tsv(MafFile) %>% #Save maf as Tibble
-    mutate(ID = row_number()) %>% 
-    relocate(ID)  
+  mutations <- read_tsv(MafFile, guess_max = min(4000, Inf)) %>% 
+    dplyr::rename(ID = X1)  
   
   drivers_moonlight <- PRAtoTibble(Drivers)
   DEGs <- DEGs %>% rownames_to_column(var = 'Hugo_Symbol')
@@ -80,9 +79,12 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
                                   noncoding_file = noncoding_file)
   
   write_csv(cscape_out,
-            path = paste(results_folder,"Cscape_output_raw.csv", sep ='/'),
+            file = paste(results_folder,"cscape-somatic_output.csv", sep ='/'),
             col_names = TRUE)
-  cscape_out <- read_csv(paste(results_folder, "Cscape_output_raw.csv", sep = '/'))
+  cscape_out <- read_csv(paste(results_folder, "cscape-somatic_output_raw.csv", sep = '/')) %>% 
+                rename_with(.cols = c("Coding_Score","Noncoding_Score","Remark"),
+                            .fn = ~ paste("CScape_", ., sep = "")) 
+    
   
   # merge cscape results
   print('Cscape-somatic is finished. Output file is saved in result folder.')
@@ -98,9 +100,9 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
                      "Variant_Type", 
                      "Chr", 
                      "Mutant")) %>%
-    mutate(CScape_Mut_Class = case_when((Coding_score > 0.5 | Noncoding_score > 0.5) ~ "CScape_Driver_Mut",    #Driver
-                                       (Coding_score <= 0.5 | Noncoding_score <= 0.5 ~ "CScape_Passenger_Mut"), #Passenger
-                                       TRUE ~ "CScape_Unclassified_Mut")) %>%  #When no score is found
+    mutate(CScape_Mut_Class = case_when((CScape_Coding_score > 0.5 | CScape_Noncoding_score > 0.5) ~ "Driver",    #Driver
+                                       (CScape_Coding_score <= 0.5 | CScape_Noncoding_score <= 0.5 ~ "Passenger"), #Passenger
+                                       TRUE ~ "Unclassified")) %>%  #When no score is found
     unique()
   
   #Lift back to 38
@@ -165,26 +167,31 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   
   
   # Make Summary Table --------------------------
+  
+  #Summarise cscape-somatic mutation types
   Summary_per_gene_1 <- DEGs_mut_annotated %>% 
-    group_by(Hugo_Symbol, Moonlight_Driver_Type, CScape_Mut_Class) %>% 
+    group_by(Hugo_Symbol, Moonlight_Oncogenic_Mediator, CScape_Mut_Class) %>% 
     summarise(n = n()) %>% 
     pivot_wider(names_from = CScape_Mut_Class,
-                values_from = n) 
+                values_from = n,
+                names_prefix = "Cscape_") 
   
+  #Summarise level of consequence 
   Summary_per_gene_2 <- DEGs_mut_annotated %>% 
-    group_by(Hugo_Symbol, Moonlight_Driver_Type) %>% 
+    group_by(Hugo_Symbol, Moonlight_Oncogenic_Mediator) %>% 
     summarise(Transcription_mut_sum = sum(Potential_Effect_on_Transcription, na.rm = TRUE),
               Translation_mut_sum = sum(Potential_Effect_on_Translation, na.rm = TRUE),
               Protein_mut_sum = sum(Potential_Effect_on_Protein, na.rm = TRUE),
               Total_Mutations = sum(!is.na(ID))) 
   
+  #Join summarise
   Summary_per_gene <- full_join(Summary_per_gene_1, Summary_per_gene_2) %>% 
-    filter(!is.na(Moonlight_Driver_Type)) %>% 
-    arrange(desc(Driver, Total_Mutations)) %>% 
-    dplyr::select(!No_mutations)
+    filter(!is.na(Moonlight_Oncogenic_Mediator)) %>% 
+    arrange(desc(CScape_Driver, Total_Mutations)) %>% 
+    dplyr::select(!CScape_No_mutations)
   
   write_csv(x = Summary_per_gene,
-            path = paste(results_folder,"DEGene_Mutation_Summary.csv", sep ='/'),
+            file = paste(results_folder,"DEGene_Mutation_Summary.csv", sep ='/'),
             col_names = TRUE)
   
   
@@ -192,32 +199,26 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   #This table is just a cleaned-up version of the annotated table
   #(when other tools to estimate score are implemented, pivot cscape scores and other score)
   DEGs_mut_Raw_out <- DEGs_mut_annotated %>% 
+    relocate("ID") %>% 
     relocate(any_of(c("Moonlight_gene_z_score", 
-                      "Moonlight_Driver_Type",
-                      "Coding", "Noncoding", 
-                      "CScape_Mut_Class", 
+                      "Moonlight_Oncogenic_Mediator",
+                      "CScape_Coding_score", "CScape_Noncoding_score", 
+                      "CScape_Mut_Class", "CScape_Remark",
                       "Potential_Effect_on_Transcription",
                       "Potential_Effect_on_Translation", 
-                      "Potential_Effect_on_Protein")), .after = "B") %>% 
-    mutate(CScape_Mut_Class = replace_na(CScape_Mut_Class, 'Unclassified'))
+                      "Potential_Effect_on_Protein",
+                      "Annotation","Annotation_Start", "Annotation_End")), .after = "B") %>% 
+    dplyr::select(!(Chr))
   
   write_csv(x = DEGs_mut_Raw_out,
-            path = paste(results_folder,"/DEGene_All_Mutation_Annotations.csv", sep = ''),
+            file = paste(results_folder,"/DEGene_All_Mutation_Annotations.csv", sep = ''),
             col_names = TRUE)
   
   
-  # Maftools functions --------------
+  # Maftools Plots --------------
   MafFile <- read.maf(MafFile)
   png(filename = paste(results_folder, "/PlotSumMAF.png", sep = ""))
   plotmafSummary(MafFile)
-  dev.off()
-  
-  png(filename = paste(results_folder, "/PlotRainfallMAF.png", sep = ""))
-  rainfallPlot(MafFile)
-  dev.off()
-  
-  png(filename = paste(results_folder, "/PlotSomaticInteractionsMAF.png", sep = ""))
-  somaticInteractions(MafFile)
   dev.off()
   
 } # End of function --------------------------------------------
