@@ -221,4 +221,19 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   plotmafSummary(MafFile)
   dev.off()
   
+  # Return final list of Drivers ------
+  TSG <-  DEGs_mut_annotated %>%  
+    filter(Moonlight_Oncogenic_Mediator =="TSG", 
+           CScape_Mut_Class == "Driver") %>% 
+    dplyr::select(Hugo_Symbol) %>% 
+    unique() %>%  pull()
+  
+  OCG <- DEGs_mut_annotated %>%  
+    filter(Moonlight_Oncogenic_Mediator =="OCG", 
+           CScape_Mut_Class == "Driver") %>% 
+    dplyr::select(Hugo_Symbol) %>% 
+    unique() %>%  pull()
+  
+  return(list("TSG" = TSG,"OCG" = OCG))
+  
 } # End of function --------------------------------------------
