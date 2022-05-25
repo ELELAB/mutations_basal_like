@@ -59,6 +59,9 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   # Load ENCODE file (promoters)
   promoters <- read_tsv("data/ENCFF140XLU.bed.gz", col_names = FALSE) %>% 
     mutate(Annotation = 'Promoter')
+  
+  # Load NCG file
+  NCG <- read_csv("data/NCG_7.0_restructured.csv")
 
   
   # Wrangle Data -----------------------------
@@ -184,22 +187,24 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
               Protein_mut_sum = sum(Potential_Effect_on_Protein, na.rm = TRUE),
               Total_Mutations = sum(!is.na(ID))) 
   
-  #Join summarise
+  #Join summarises and add NCG data
   Summary_per_gene <- full_join(Summary_per_gene_1, Summary_per_gene_2) %>% 
     filter(!is.na(Moonlight_Oncogenic_Mediator)) %>% 
     arrange(desc(CScape_Driver, Total_Mutations)) %>% 
-    dplyr::select(!CScape_No_mutations)
+    dplyr::select(!CScape_No_mutations) %>% 
+    left_join(NCG, by = c("Hugo_Symbol" = "symbol"))
   
   write_csv(x = Summary_per_gene,
             file = paste(results_folder,"DEGene_Mutation_Summary.csv", sep ='/'),
             col_names = TRUE)
   
   
-  # Make 'Raw' Table ---------------------------
-  #This table is just a cleaned-up version of the annotated table
-  #(when other tools to estimate score are implemented, pivot cscape scores and other score)
+  # Make Mutation Table  including all annotations from this analysis--------
+  # NCG is joined and the table order is restructured
   DEGs_mut_Raw_out <- DEGs_mut_annotated %>% 
+    left_join(NCG, by = c("Hugo_Symbol" = "symbol"))
     relocate("ID") %>% 
+    relocate(starts_with("NCG"), .after = "B") %>% 
     relocate(any_of(c("Moonlight_gene_z_score", 
                       "Moonlight_Oncogenic_Mediator",
                       "CScape_Coding_score", "CScape_Noncoding_score", 
@@ -215,7 +220,7 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
             col_names = TRUE)
   
   
-  # Maftools Plots --------------
+  # Maftools Plots --------------------
   MafFile <- read.maf(MafFile)
   png(filename = paste(results_folder, "/PlotSumMAF.png", sep = ""))
   plotmafSummary(MafFile)
