@@ -39,7 +39,7 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   
   drivers_moonlight <- PRAtoTibble(Drivers)
   DEGs <- DEGs %>% rownames_to_column(var = 'Hugo_Symbol')
-  
+
   # Load homemade mutations effect on transcription table
   transcription_binary <- read_tsv("data/transcription_mutations.tsv") %>% 
     pivot_longer(cols = !Variant_Classification, 
@@ -62,7 +62,6 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   
   # Load NCG file
   NCG <- read_csv("data/NCG_7.0_restructured.csv")
-
   
   # Wrangle Data -----------------------------
   # Keep only mutations in DEGs 
@@ -84,8 +83,8 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   write_csv(cscape_out,
             file = paste(results_folder,"cscape-somatic_output.csv", sep ='/'),
             col_names = TRUE)
-  cscape_out <- read_csv(paste(results_folder, "cscape-somatic_output_raw.csv", sep = '/')) %>% 
-                rename_with(.cols = c("Coding_Score","Noncoding_Score","Remark"),
+  cscape_out <- read_csv(paste(results_folder, "cscape-somatic_output.csv", sep = '/')) %>% 
+                rename_with(.cols = c("Coding_score","Noncoding_score","Remark"),
                             .fn = ~ paste("CScape_", ., sep = "")) 
     
   
@@ -177,7 +176,7 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
     summarise(n = n()) %>% 
     pivot_wider(names_from = CScape_Mut_Class,
                 values_from = n,
-                names_prefix = "Cscape_") 
+                names_prefix = "CScape_") 
   
   #Summarise level of consequence 
   Summary_per_gene_2 <- DEGs_mut_annotated %>% 
@@ -195,15 +194,15 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
     left_join(NCG, by = c("Hugo_Symbol" = "symbol"))
   
   write_csv(x = Summary_per_gene,
-            file = paste(results_folder,"DEGene_Mutation_Summary.csv", sep ='/'),
+            file = paste(results_folder,"Oncogenic_mediators_mutation_summary.csv", sep ='/'),
             col_names = TRUE)
   
   
   # Make Mutation Table  including all annotations from this analysis--------
   # NCG is joined and the table order is restructured
   DEGs_mut_Raw_out <- DEGs_mut_annotated %>% 
-    left_join(NCG, by = c("Hugo_Symbol" = "symbol"))
-    relocate("ID") %>% 
+    left_join(NCG, by = c("Hugo_Symbol" = "symbol")) %>% 
+    relocate(ID) %>% 
     relocate(starts_with("NCG"), .after = "B") %>% 
     relocate(any_of(c("Moonlight_gene_z_score", 
                       "Moonlight_Oncogenic_Mediator",
@@ -216,7 +215,7 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
     dplyr::select(!(Chr))
   
   write_csv(x = DEGs_mut_Raw_out,
-            file = paste(results_folder,"/DEGene_All_Mutation_Annotations.csv", sep = ''),
+            file = paste(results_folder,"DEG_Mutations_Annotations.csv", sep = '/'),
             col_names = TRUE)
   
   
