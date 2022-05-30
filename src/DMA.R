@@ -34,34 +34,34 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   
   # Load Data --------------------------------
   # read maf and add ID number to each mutation
-  mutations <- read_tsv(MafFile, guess_max = min(4000, Inf)) %>% 
+  mutations <- read_tsv(MafFile, guess_max = min(4000, Inf), show_col_types = FALSE) %>% 
     dplyr::rename(ID = X1)  
   
   drivers_moonlight <- PRAtoTibble(Drivers)
   DEGs <- DEGs %>% rownames_to_column(var = 'Hugo_Symbol')
 
   # Load homemade mutations effect on transcription table
-  transcription_binary <- read_tsv("data/transcription_mutations.tsv") %>% 
+  transcription_binary <- read_tsv("data/transcription_mutations.tsv", show_col_types = FALSE) %>% 
     pivot_longer(cols = !Variant_Classification, 
                  names_to = "Variant_Type", 
                  values_to = "Potential_Effect_on_Transcription")
   
-  translation_binary <- read_tsv("data/translation_mutations.tsv") %>% 
+  translation_binary <- read_tsv("data/translation_mutations.tsv", show_col_types = FALSE) %>% 
     pivot_longer(cols = !Variant_Classification, 
                  names_to = "Variant_Type", 
                  values_to = "Potential_Effect_on_Translation")
   
-  protein_binary <- read_tsv("data/protein_structure_mutations.tsv") %>% 
+  protein_binary <- read_tsv("data/protein_structure_mutations.tsv", show_col_types = FALSE) %>% 
     pivot_longer(cols = !Variant_Classification, 
                  names_to = "Variant_Type", 
                  values_to = "Potential_Effect_on_Protein")
   
   # Load ENCODE file (promoters)
-  promoters <- read_tsv("data/ENCFF140XLU.bed.gz", col_names = FALSE) %>% 
+  promoters <- read_tsv("data/ENCFF140XLU.bed.gz", col_names = FALSE, show_col_types = FALSE) %>% 
     mutate(Annotation = 'Promoter')
   
   # Load NCG file
-  NCG <- read_csv("data/NCG_7.0_restructured.csv")
+  NCG <- read_csv("data/NCG_7.0_restructured.csv", show_col_types = FALSE)
   
   # Wrangle Data -----------------------------
   # Keep only mutations in DEGs 
@@ -83,18 +83,19 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
   write_csv(cscape_out,
             file = paste(results_folder,"cscape-somatic_output.csv", sep ='/'),
             col_names = TRUE)
-  cscape_out <- read_csv(paste(results_folder, "cscape-somatic_output.csv", sep = '/')) %>% 
-                rename_with(.cols = c("Coding_score","Noncoding_score","Remark"),
-                            .fn = ~ paste("CScape_", ., sep = "")) 
-    
-  
-  # merge cscape results
   print('Cscape-somatic is finished. Output file is saved in result folder.')
-  cscape_out <- cscape_out %>% 
-    mutate(Variant_Type = "SNP")
   
+  #Reload Cscape output and add cscape_columns in case one type is not found
+  cscape_cols <- c(Coding_score = NA, Noncoding_score = NA, Remark = NA)
+  cscape_out <- read_csv(paste(results_folder, "cscape-somatic_output.csv", sep = '/'), show_col_types = FALSE) %>%
+                add_column(., !!!cscape_cols[setdiff(names(cscape_cols), names(.))]) %>% 
+                rename_with(.cols = c("Coding_score","Noncoding_score","Remark"),
+                            .fn = ~ paste("CScape_", ., sep = "")) %>% 
+    mutate(Variant_Type = "SNP")
+    
+  # merge cscape results
   DEGs_mut_annotated_19 <- DEGs_mut_hg19 %>% 
-    separate(Chromosome, into = c(NA, "Chr"), sep = 3, remove = FALSE)%>% 
+    separate(Chromosome, into = c(NA, "Chr"), sep = 3, remove = FALSE, convert = TRUE)%>% 
     mutate(Mutant = case_when(Reference_Allele == Tumor_Seq_Allele1 ~ Tumor_Seq_Allele2,
                               Reference_Allele == Tumor_Seq_Allele2 ~ Tumor_Seq_Allele1)) %>%
     left_join(cscape_out, 
@@ -187,7 +188,8 @@ DMA <- function(MafFile, DEGs, Drivers, coding_file, noncoding_file, cosmic_file
               Total_Mutations = sum(!is.na(ID))) 
   
   #Join summarises and add NCG data
-  Summary_per_gene <- full_join(Summary_per_gene_1, Summary_per_gene_2) %>% 
+  Summary_per_gene <- full_join(Summary_per_gene_1, Summary_per_gene_2,
+                                by = c("Hugo_Symbol", "Moonlight_Oncogenic_Mediator")) %>% 
     filter(!is.na(Moonlight_Oncogenic_Mediator)) %>% 
     arrange(desc(CScape_Driver, Total_Mutations)) %>% 
     dplyr::select(!CScape_No_mutations) %>% 

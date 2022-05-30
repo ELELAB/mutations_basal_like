@@ -29,7 +29,9 @@ PRAtoTibble <- function(pra_file){
            Moonlight_Oncogenic_Mediator = "OCG") %>% 
     dplyr::rename(Moonlight_gene_z_score = value)
   
-  drivers <- full_join(TSG, OCG) 
+  drivers <- full_join(TSG, OCG, by = c("Hugo_Symbol", 
+                                        "Moonlight_gene_z_score", 
+                                        "Moonlight_Oncogenic_Mediator") ) 
   
   return(drivers)
 }
