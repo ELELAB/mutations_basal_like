@@ -30,7 +30,7 @@ LiftMAF <- function(Infile, Current_Build){
   } else {
     print("Error: Build must be either GRCh38 or GRCh37")
   }
-  print(chainBuild)
+
   if(flag == TRUE){
     #Change to Grange format
     infile_GRange <- makeGRangesFromDataFrame(Infile, 
@@ -48,7 +48,8 @@ LiftMAF <- function(Infile, Current_Build){
     outfile_tibble_lifted <- as_tibble(infile_GRange_lifted) %>% 
       dplyr::rename(Start_Position = start,
                     End_Position = end, 
-                    Chromosome = seqnames) %>% 
+                    Chromosome = seqnames,
+                    Strand = strand) %>% 
       dplyr::select(-c(group, group_name, width))
     
     return(outfile_tibble_lifted)
