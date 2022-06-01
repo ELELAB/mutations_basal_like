@@ -20,11 +20,13 @@
 #' Do not provide both type and genelist. 
 #' 
 #' @param additionalFilename A character string. Adds prefix to the filename of the pdf.
-#' @importFrom dplyr  
+#' 
+#' @import dplyr  
 #' @importFrom magrittr "%>%"
-#' @importFrom ComplexHeatmap
-#' @importFrom tidyHeatmap
-#' @importFrom qpdf
+#' @import ComplexHeatmap
+#' @import tidyHeatmap
+#' @importFrom qpdf pdf_combine
+#' 
 #' @return
 #' @export
 #'

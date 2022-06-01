@@ -5,10 +5,10 @@
 #' 
 #' @param df a tibble 
 #' 
-#' @importFrom dplyr 
+#' @import dplyr 
 #' @importFrom magrittr "%>%"
-#' @importFrom ComplexHeatmap
-#' @importFrom tidyHeatmap
+#' @import ComplexHeatmap
+#' @import tidyHeatmap
 #' 
 #' @return The name of the alphabeatically first gene in the tibble
 #' @export
