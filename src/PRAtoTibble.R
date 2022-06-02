@@ -2,7 +2,7 @@
 #'
 #' This function changes the PRA output to tibble format
 #' @param pra_file RDS object (list of two) from PRA
-#' @importFrom dplyr  
+#' @import dplyr  
 #' @importFrom magrittr "%>%"
 #'
 #' @return tibble with drivers

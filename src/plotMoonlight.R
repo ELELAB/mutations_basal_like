@@ -1,28 +1,40 @@
-#' plotMoonlightResults 
+#' plotMoonlight 
 #' 
-#' This function creates a heatmap 
+#' This function creates a heatmap of Moonlight gene z-scores for selected genes.
 #'
-#' @param DEG_Mutations_Annotations A tibble 
-#' @param Oncogenic_mediators_mutation_summary A tibble 
-#' @param URA A loaded RDA object
-#' @param gene_type A character string either "mediators" or "drivers". If NULL defaults to "drivers".
-#' @param n The top number of genes plotted. If NULL defaults to 50.
-#' @param genelist A vector of strings containing Hugo Symbols of genes.s
+#' @param DEG_Mutations_Annotations A tibble, output file from DMA. 
+#' @param Oncogenic_mediators_mutation_summary A tibble, output file from DMA.
+#' @param dataURA Output URA function.
+#' @param gene_type A character string either \code{"mediators"} or \code{"drivers"}. 
+#' \itemize{
+#' \item If \code{NULL} defaults to \code{"drivers"}. 
+#' \item \code{"mediators"} will show the oncogenic mediators with the highst number of mutations regardless of driver/passenger classification.
+#' \item \code{"drivers"} will show the driver genes with the highest number of driver mutations.
+#' }
+#' @param n Numeric. The top number of genes to be plotted. If \code{NULL} defaults to 50.
+#' @param genelist A vector of strings containing Hugo Symbols of genes. 
+#' Overwrites \code{gene_type} argument.
 #'
 #' @import dplyr  
 #' @importFrom magrittr "%>%"
-#' @import ComlpexHeatmap
+#' @import ComplexHeatmap
 #' @import tidyHeatmap
 #'
-#' @return
+#' @return No return value. Moonlight scores are plotted for selected genes.
 #' @export
 #'
 #' @examples
-#' plotMoonlightResults(DEG_Mutations_Annotations, Oncogenic_mediators_mutation_summary,URA, gene_type = "drivers", n = 50)
-#' 
+#' plotMoonlight(DEG_Mutations_Annotations, 
+#'               Oncogenic_mediators_mutation_summary, 
+#'               dataURA, gene_type = "drivers", n = 50)
+#' plotMoonlight(DEG_Mutations_Annotiontions, 
+#'               Oncogenic_Mediators_mutation_summary, 
+#'               dataURA, 
+#'               genelist = c("BRCA1", "BRCA2", "GATA3", "RB1"))
+
 plotMoonlight <- function(DEG_Mutations_Annotations, 
                           Oncogenic_mediators_mutation_summary,
-                          URA,
+                          dataURA,
                           gene_type = "drivers",
                           n = 50, 
                           genelist = c()){
@@ -50,12 +62,12 @@ plotMoonlight <- function(DEG_Mutations_Annotations,
                     CScape_Unclassified = 0)) #%>% 
   
   # Type of plot:
-  if (gene_type == "mediators"){
-    ura_wrangled <- ura_wrangled %>% 
-      slice_max(Total_Mutations, n = n, with_ties = FALSE)
-    } else if (length(genelist) > 0 ){
+  if (length(genelist) > 0 ){
     ura_wrangled <- ura_wrangled %>% 
       filter(Genes %in% genelist)
+    } else if (gene_type == "mediators"){
+      ura_wrangled <- ura_wrangled %>% 
+        slice_max(Total_Mutations, n = n, with_ties = FALSE)
     } else{
     ura_wrangled <- ura_wrangled %>% 
       slice_max(CScape_Driver, n = n, with_ties = FALSE)

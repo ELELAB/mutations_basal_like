@@ -6,7 +6,7 @@
 #' @param Mutant The mutant nucleotide
 #' @param file_coding cscape_table with coding scores
 #' @param file_noncoding cscape_table with noncoding scores
-#' @importFrom dplyr  
+#' @import dplyr  
 #' @importFrom magrittr "%>%"
 #' @importFrom tidyr unite nest unnest
 #' @importFrom stringr str_split
@@ -17,7 +17,7 @@
 #' @export
 #' @examples
 #' 
-#' data <- tabix_func(Ranges, Reference_Allele, Mutant, file_coding, file_noncoding){
+#' data <- tabix_func(Ranges, Reference_Allele, Mutant, file_coding, file_noncoding)
 
 
 

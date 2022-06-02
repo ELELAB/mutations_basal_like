@@ -5,21 +5,21 @@
 #' in a single heatmap or split into several different ones.
 #' It is also possible to provide a personalised genelist to visualise.
 #'
-#' @param DEG_Mutations_Annotations Output file from DMA FORMAT
-#' @param Oncogenic_mediators_mutation_summary Output file from DMA FORMAT
-#' @param type A character string. It can take the values "split" or "complete". 
-#' "split" will split the entire dataset into sections of 40 genes and create individual plots. 
+#' @param DEG_Mutations_Annotations A tibble, output file from DMA. 
+#' @param Oncogenic_mediators_mutation_summary A tibble, output file from DMA.
+#' @param type A character string. It can take the values \code{"split"} or \code{"complete"}. 
+#' If both type and genelist are \code{NULL}, the function will default to \code{"split"}.
+#' \itemize{
+#' \item \code{"split"} will split the entire dataset into sections of 40 genes and create individual plots. 
 #' These plots will be merged into one pdf. The genes will be sorted alphabeatically.
-#' "complete" will create one plot, though it will not be possible to see the individual gene names.
+#' \item \code{"complete"} will create one plot, though it will not be possible to see the individual gene names.
 #' The heatmap will be clustered hierarchically. 
-#' If both type and genelist is NULL, the function will default to "split".
-#'  
-#' @param genelist A character vector containing hugo symbols of genes. 
+#' }
+#' @param genelist A character vector containing HUGO symbols. 
 #' A single heatmap will be created with only these genes.
-#' The heatmap will be hierarchically clustered. If NULL 
-#' Do not provide both type and genelist. 
+#' The heatmap will be hierarchically clustered. Overwritten by \code{type}.
 #' 
-#' @param additionalFilename A character string. Adds prefix to the filename of the pdf.
+#' @param additionalFilename A character string. Adds prefix or filepath to the filename of the pdf.
 #' 
 #' @import dplyr  
 #' @importFrom magrittr "%>%"
@@ -27,13 +27,20 @@
 #' @import tidyHeatmap
 #' @importFrom qpdf pdf_combine
 #' 
-#' @return
+#' @return No return value. DMA results are plotted. 
 #' @export
 #'
 #' @examples
-#' plotDMA(DEG_Mutations_Annotions, Oncogenic_mediators_mutation_summary, type = "split", additionalFilename = "myplots_")
-#' plotDMA(DEG_Mutations_Annotions, Oncogenic_mediators_mutation_summary, type = "complete", additionalFilename = "myplot_")
-#' plotDMA(DEG_Mutations_Annotions, Oncogenic_mediators_mutation_summary, genelist = c("BRCA1", "BRCA2", "FOX1", "GATA3", "TP53"), additionalFilename = "myplot_")
+#' plotDMA(DEG_Mutations_Annotions, 
+#'         Oncogenic_mediators_mutation_summary, 
+#'         type = "split", additionalFilename = "path/myplots_")
+#' plotDMA(DEG_Mutations_Annotions, 
+#'         Oncogenic_mediators_mutation_summary, 
+#'         type = "complete", additionalFilename = "path/myplot_")
+#' plotDMA(DEG_Mutations_Annotions, 
+#'         Oncogenic_mediators_mutation_summary, 
+#'         genelist = c("BRCA1", "BRCA2", "FOX1", "GATA3", "TP53"), 
+#'         additionalFilename = "path/myplot_")
 
 plotDMA <- function(DEG_Mutations_Annotations, 
                     Oncogenic_mediators_mutation_summary,

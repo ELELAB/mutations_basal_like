@@ -1,12 +1,12 @@
 #' LiftMAF
 #'
-#' This function lifts a MAF file to a different genomic build
-#' @param infile tibble of MAF 
-#' @param Current_Build GRCh38 or GRCh37
-#' @importFrom dplyr  
+#' This function lifts a MAF file to a different genomic build.
+#' @param infile A tibble of MAF. 
+#' @param Current_Build A charcter string, either \code{GRCh38} or \code{GRCh37}.
+#' @import dplyr  
 #' @importFrom magrittr "%>%"
-#' @importFrom GenomicRanges
-#' @importFrom liftover
+#' @import GenomicRanges
+#' @import liftOver
 #' @return MAF tibble with positions lifted to another build 
 #' @export
 #' @examples

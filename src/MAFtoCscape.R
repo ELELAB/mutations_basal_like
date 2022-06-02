@@ -2,10 +2,10 @@
 #'
 #' This function extracts columns from a MAF tibble to fit CScape input format
 #' @param MAF tibble of MAF 
-#' @importFrom dplyr  
+#' @import dplyr  
 #' @importFrom magrittr "%>%"
 #' @importFrom tidyr separate
-#' @return tibble of cscape input
+#' @return tibble of cscape-somatic input
 #' @export
 #' @examples
 #' 

@@ -4,10 +4,9 @@
 #' @param input Input matching cscape input
 #' @param coding_file cscape_table with coding scores
 #' @param noncoding_file cscape_table with noncoding scores
-#' @importFrom dplyr  
+#' @import dplyr  
 #' @importFrom magrittr "%>%"
 #' @importFrom tidyr unite nest unnest
-#' @import tabix_func
 #'
 #'
 #' @return returns a tibble with a score and remark for each SNP
